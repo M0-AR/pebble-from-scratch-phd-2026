@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble from Scratch — Why 2 + 3 × 4 = 14</title>
+<meta name="description" content="A tiny programming language in ~200 lines of Python: tokens, tree, value, memory. Live playground, trace visualizer, benchmarks, and a scored quiz.">
+<style>
+:root{--bg:#0d1117;--card:#161b22;--line:#30363d;--txt:#e6edf3;--mut:#8b949e;--blue:#1f6feb;--pur:#8250df;--grn:#1a7f37;--red:#cf222e;--amber:#9a6700}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:24px 18px 80px}
+.hero{border:1px solid var(--line);border-radius:16px;padding:28px;background:linear-gradient(180deg,#161b22,#0d1117);text-align:center}
+.hero h1{margin:0 0 8px;font-size:clamp(24px,4vw,38px)}
+.hero p.sub{color:var(--mut);max-width:640px;margin:8px auto}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.badge{font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;background:#21262d;border:1px solid var(--line)}
+.badge.g{background:#12261a;border-color:var(--grn)}.badge.b{background:#0e1c33;border-color:var(--blue)}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+a.btn,.btn{background:var(--blue);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-weight:700;text-decoration:none;cursor:pointer;font-size:15px}
+.btn.ghost{background:#21262d;border:1px solid var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+.card h2{margin-top:0}.mut{color:var(--mut)}.small{font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{border:1px solid var(--line);padding:8px;text-align:left}th{background:#21262d}
+textarea,input[type=text]{width:100%;background:#0d1117;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:14px ui-monospace,Menlo,Consolas,monospace}
+pre{background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:13.5px;white-space:pre-wrap}
+.bar{height:14px;border-radius:7px;background:#21262d;overflow:hidden}.bar>i{display:block;height:100%}
+.q{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}.q.correct{border-color:var(--grn)}.q.wrong{border-color:var(--red)}
+.q label{display:block;padding:4px 0;cursor:pointer}.fb{font-weight:700;margin-top:6px}
+#score{font-size:20px;font-weight:800}
+img{max-width:100%;border-radius:12px;border:1px solid var(--line)}
+.theater{background:#000;border-radius:12px;padding:16px;font-family:ui-monospace,Menlo,Consolas,monospace;min-height:150px}
+.cursor{display:inline-block;width:9px;background:#58a6ff;animation:blink 1s steps(1) infinite;color:transparent}@keyframes blink{50%{opacity:0}}
+.tok{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:2px 8px;margin:2px;background:#21262d;font-family:ui-monospace,monospace;font-size:13px}
+.tree-node{display:inline-block;border:2px solid var(--pur);border-radius:10px;padding:2px 10px;margin:2px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+<h1>🪨 Pebble from Scratch</h1>
+<p class="sub"><b>Why <code>2 + 3 × 4 = 14</code>, not 20.</b> A tiny language — numbers, variables,
+<code>let</code>, <code>print</code> — built in four steps: characters → <b>tokens</b> →
+<b>tree</b> → <b>value</b> (+ memory). Every claim on this page runs: 23 tests,
+500 fuzzed expressions matching Python exactly, live-market numbers, benchmarks.</p>
+<div class="badges"><span class="badge g">23 tests passing</span><span class="badge b">Python ≥ 3.10</span><span class="badge">stdlib only</span><span class="badge g">MIT</span><span class="badge b">Docker ready</span></div>
+<div class="btns"><a class="btn" href="#play">▶ Open the playground</a><a class="btn ghost" href="#quiz">🧩 Take the quiz</a><a class="btn ghost" href="https://github.com/">⭐ Star the repo</a></div>
+<p class="small mut">No install needed here — the playground and quiz run entirely in your browser.</p>
+</div>
+
+<div class="card" id="idea">
+<h2>🧠 The whole idea in 60 seconds</h2>
+<p>Let's work this out in a step-by-step way to be sure we have the right answer.</p>
+<ol>
+<li><b>Glue characters into words (tokens).</b> <code>2 + 3 * 4</code> → 5 tokens.</li>
+<li><b>Seat words into a tree.</b> <code>(+ 2 (* 3 4))</code> — the <code>*</code> sits deeper, so it runs first.</li>
+<li><b>Walk the tree bottom-up.</b> <code>3*4=12</code>, then <code>2+12=14</code>.</li>
+<li><b>Remember with a table.</b> <code>let price = 5</code> stores; <code>print</code> shows.</li>
+<li><b>Point at mistakes.</b> Every error names line + column with a <code>^</code> caret.</li>
+<li><b>Python agrees</b> — then compiles the tree away (its <code>14</code> is pre-computed).</li>
+</ol>
+<img src="assets/hero.png" alt="Pipeline diagram: characters to tokens to tree to value">
+</div>
+
+<div class="card" id="theater-card">
+<h2>🎬 Terminal theater <span class="small mut">(real output, auto-played)</span></h2>
+<div class="theater" id="theater" aria-live="polite"></div>
+<p class="small mut">Above: the exact bytes <code>python -m pebble --trace '2 + 3 * 4'</code> prints, typed live. The README embeds the same session as <code>assets/demo.gif</code> because GitHub plays GIFs inline.</p>
+<img src="assets/demo.gif" alt="Animated demo: tracing 2 + 3 * 4 and running the demo program">
+</div>
+
+<div class="card" id="play">
+<h2>🔬 Live playground — break things safely</h2>
+<p class="mut">Type an <b>expression</b> (e.g. <code>2 + 3 * 4</code>) or a full <b>program</b> with <code>let</code>/<code>print</code> lines. Nothing leaves your browser.</p>
+<textarea id="src" rows="6">let price = 5
+let count = 3
+let total = price * count + 2
+print total
+print (total - 2) / count</textarea>
+<p><button class="btn" id="run">Run</button> <button class="btn ghost" id="traceBtn">Trace expression</button>
+<button class="btn ghost" id="ex1">2 + 3 * 4</button> <button class="btn ghost" id="ex2">17 % 5</button> <button class="btn ghost" id="ex3">error demo</button></p>
+<pre id="out">Press Run.</pre>
+<div id="tokens"></div>
+<div id="tree"></div>
+</div>
+
+<div class="card">
+<h2>📊 Measured, not asserted</h2>
+<div class="grid2">
+<div><img src="assets/tree.png" alt="Correct tree giving 14 versus naive left-to-right giving 20"><p class="small mut">Naive left-to-right is wrong on 3/9 unparenthesized rows — exactly where a tighter operator follows a looser one.</p></div>
+<div><img src="assets/benchmark.png" alt="Bar chart of stage costs"><p class="small mut">Representative medians (µs): tokenize ≈1.6, parse ≈3.3, evaluate ≈0.4, program ≈18. Your machine's 7 runs are in <code>benchmarks/throughput_results.json</code>.</p></div>
+</div>
+<div class="bar" title="parse dominates"><i style="width:72%;background:#8250df"></i></div>
+<p class="small mut">Parsing dominates (≈8× evaluation) — the stage that <i>builds</i> the tree costs more than the stage that <i>walks</i> it. Live-market check: BTC 86158 × 3 + 2 → Pebble <code>258476, 86158, 2, 2679</code> = Python exactly.</p>
+</div>
+
+<div class="card" id="quiz">
+<h2>🧩 Check yourself — from scratch to pro <span class="small mut">(8 questions, instant feedback)</span></h2>
+<div id="qs"></div>
+<p><button class="btn" id="grade">Check my answers</button> <button class="btn ghost" id="reset">Reset</button> <span id="score"></span></p>
+</div>
+
+<div class="card">
+<h2>🌱 Keep going</h2>
+<table><tr><th>You are…</th><th>Do this next</th></tr>
+<tr><td>New to languages</td><td>Read README §A, then open <code>pebble/tokens.py</code> (73 lines) top to bottom.</td></tr>
+<tr><td>Interview prep</td><td>Redo the <code>%</code> exercise blind (<code>exercises/exercise_percent.md</code>), then add unary minus.</td></tr>
+<tr><td>Reviewer</td><td>Run <code>make verify</code> or <code>docker compose up --build</code>; compare your JSON to the committed artifacts.</td></tr>
+<tr><td>Teacher</td><td>Project §E + playground + quiz: predict → run → explain. 30 minutes, zero setup.</td></tr></table>
+<h3>Enable this page on GitHub Pages</h3>
+<p>Push → <b>Settings → Pages → Source: Deploy from a branch</b> → branch <code>main</code>, folder <code>/ (root)</code> → open <code>https://&lt;you&gt;.github.io/&lt;repo&gt;/preview.html</code>. Or choose <b>GitHub Actions</b> source — <code>.github/workflows/pages.yml</code> is included.</p>
+<p class="small mut">MIT licensed. Numbers on this page mirror <code>experiments/*.json</code> and <code>benchmarks/*.json</code> in the repo.</p>
+</div>
+
+</div>
+<script>
+"use strict";
+/* ---- Pebble in the browser: same grammar as pebble/parser.py ---- */
+function tokenize(text, line){
+  const toks=[];let i=0;
+  while(i<text.length){const ch=text[i],col=i+1;
+    if(ch===" "||ch==="\t"||ch==="\r"){i++;continue;}
+    if(/[0-9]/.test(ch)){let j=i;while(j<text.length&&/[0-9]/.test(text[j]))j++;toks.push({kind:"NUMBER",value:text.slice(i,j),line,col});i=j;continue;}
+    if(/[A-Za-z_]/.test(ch)){let j=i;while(j<text.length&&/[A-Za-z0-9_]/.test(text[j]))j++;const w=text.slice(i,j);toks.push({kind:(w==="let"||w==="print")?"KEYWORD":"NAME",value:w,line,col});i=j;continue;}
+    if("+-*/%=()".includes(ch)){toks.push({kind:"OP",value:ch,line,col});i++;continue;}
+    throw {message:"Unexpected character '"+ch+"'",line,col};
+  }
+  toks.push({kind:"EOF",value:"",line,col:text.length+1});return toks;
+}
+function Parser(toks){this.t=toks;this.p=0;}
+Parser.prototype.peek=function(){return this.t[this.p];};
+Parser.prototype.adv=function(){const t=this.t[this.p];if(this.p<this.t.length-1)this.p++;return t;};
+Parser.prototype.take=function(k,v){const t=this.peek();
+  if(t.kind!==k||(v&&t.value!==v)){const want=v?("'"+v+"'"):k.toLowerCase();
+    const found=t.kind==="EOF"?"the end of the line":("'"+t.value+"'");throw{message:"Expected "+want+", but found "+found,line:t.line,col:t.col};}
+  return this.adv();};
+Parser.prototype.expression=function(){let n=this.term();
+  while(this.peek().kind==="OP"&&(this.peek().value==="+"||this.peek().value==="-")){const op=this.adv().value;n={t:"b",op,left:n,right:this.term()};}return n;};
+Parser.prototype.term=function(){let n=this.factor();
+  while(this.peek().kind==="OP"&&(this.peek().value==="*"||this.peek().value==="/"||this.peek().value==="%")){const op=this.adv().value;n={t:"b",op,left:n,right:this.factor()};}return n;};
+Parser.prototype.factor=function(){const t=this.peek();
+  if(t.kind==="NUMBER"){this.adv();return{t:"n",value:parseInt(t.value,10),line:t.line,col:t.col};}
+  if(t.kind==="NAME"){this.adv();return{t:"v",name:t.value,line:t.line,col:t.col};}
+  if(t.kind==="OP"&&t.value==="("){this.adv();const n=this.expression();this.take("OP",")");return n;}
+  if(t.kind==="EOF")throw{message:"Expected a number, name, or '(' but found the end of the line",line:t.line,col:t.col};
+  throw{message:"Expected a number, name, or '(' but found '"+t.value+"'",line:t.line,col:t.col};};
+function treeS(n){if(n.t==="n")return String(n.value);if(n.t==="v")return n.name;return"("+n.op+" "+treeS(n.left)+" "+treeS(n.right)+")";}
+function ev(n,env,steps){if(n.t==="n")return n.value;
+  if(n.t==="v"){if(!(n.name in env))throw{message:"Undefined name '"+n.name+"'",line:n.line,col:n.col};return env[n.name];}
+  const l=ev(n.left,env,steps),r=ev(n.right,env,steps);let o;
+  if(n.op==="+")o=l+r;else if(n.op==="-")o=l-r;else if(n.op==="*")o=l*r;
+  else if(n.op==="/"){if(r===0)throw{message:"Division by zero",line:1,col:1};o=(l%r===0)?l/r:Math.trunc(l/r);}
+  else if(n.op==="%"){if(r===0)throw{message:"Remainder by zero",line:1,col:1};o=l%r;}
+  if(steps)steps.push(l+" "+n.op+" "+r+" = "+o);return o;}
+function runProgram(src){const out=[],env={};const lines=src.split("\n");
+  lines.forEach((raw,idx)=>{const ln=idx+1;if(!raw.trim())return;
+    const toks=tokenize(raw,ln);const p=new Parser(toks);const f=p.peek();
+    if(f.kind==="KEYWORD"&&f.value==="let"){p.adv();const nm=p.take("NAME");p.take("OP","=");
+      let e=p.expression();const end=p.peek();
+      if(end.kind!=="EOF")throw{message:"Unexpected '"+end.value+"' after expression",line:end.line,col:end.col};
+      env[nm.value]=ev(e,env);}else if(f.kind==="KEYWORD"&&f.value==="print"){
+      p.adv();let e=p.expression();const end=p.peek();
+      if(end.kind!=="EOF")throw{message:"Unexpected '"+end.value+"' after expression",line:end.line,col:end.col};
+      try{out.push(ev(e,env));}catch(ex){throw{message:ex.message,line:ln,col:ex.col||1};}
+    }else if(f.kind==="EOF")throw{message:"Empty statement",line:ln,col:f.col};
+    else throw{message:"Expected 'let' or 'print' but found '"+f.value+"'",line:ln,col:f.col};});
+  return{out,env};}
+function caret(line,col){return" ".repeat(Math.max(0,col-1))+"^";}
+/* ---- UI ---- */
+const src=document.getElementById("src"),out=document.getElementById("out"),
+      tokDiv=document.getElementById("tokens"),treeDiv=document.getElementById("tree");
+function showErr(e){const lines=src.value.split("\n");const rl=(e.line>=1&&e.line<=lines.length)?lines[e.line-1]:"";
+  out.textContent="[line "+e.line+", col "+e.col+"] "+e.message+(rl?"\n"+rl+"\n"+caret(rl,e.col):"");}
+document.getElementById("run").onclick=()=>{tokDiv.innerHTML="";treeDiv.innerHTML="";
+  try{const r=runProgram(src.value);out.textContent=r.out.length?r.out.join("\n"):"(no output — did you forget print?)";}
+  catch(e){showErr(e);}};
+document.getElementById("traceBtn").onclick=()=>{const t=src.value.split("\n").find(l=>l.trim())||"";
+  try{const toks=tokenize(t,1);const n=new Parser(toks).parse_expression0();
+    out.textContent="tree: "+treeS(n)+"\nvalue: "+ev(n,{});}catch(e){showErr(e);}};
+Parser.prototype.parse_expression0=function(){const n=this.expression();const t=this.peek();
+  if(t.kind!=="EOF")throw{message:"Unexpected '"+t.value+"' after expression",line:t.line,col:t.col};return n;};
+document.getElementById("ex1").onclick=()=>{src.value="print 2 + 3 * 4";document.getElementById("run").click();};
+document.getElementById("ex2").onclick=()=>{src.value="print 17 % 5";document.getElementById("run").click();};
+document.getElementById("ex3").onclick=()=>{src.value="let x = 2 * * 3";document.getElementById("run").click();};
+/* theater */
+(function(){const el=document.getElementById("theater");
+  const script=["$ python -m pebble --trace '2 + 3 * 4'","tokens: NUMBER:2 OP:+ NUMBER:3 OP:* NUMBER:4","tree:   (+ 2 (* 3 4))","  3 * 4 = 12","  2 + 12 = 14","value:  14","","$ python -m pebble programs/demo.pebble","17","5"];
+  let li=0,ci=0,buf="";const full=script.join("\n");
+  (function tick(){if(li>=script.length){setTimeout(()=>{li=0;buf="";el.innerHTML="";tick();},4000);return;}
+    const line=script[li];ci++;
+    el.innerHTML=(buf+line.slice(0,ci)).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'<span class="cursor">_</span>';
+    if(ci>=line.length){buf+=line+"\n";li++;ci=0;setTimeout(tick,li===6?900:350);}else setTimeout(tick,26);})();})();
+/* quiz */
+const QBANK=[
+ {q:"How many tokens does `2 + 3 * 4` make?",o:["3","5","7","9"],a:1,why:"2, +, 3, *, 4 — symbols stand alone, spaces vanish."},
+ {q:"What tree does `2 + 3 * 4` parse to?",o:["(+ 2 (* 3 4))","(* (+ 2 3) 4)","(+ (* 2 3) 4)","(+ 2 3 4)"],a:0,why:"* binds tighter: term sits deeper than expression."},
+ {q:"A program that reads left-to-right prints…",o:["14","20","12","24"],a:1,why:"(2+3)×4 = 20 — the transcript's naive bug."},
+ {q:"`(2 + 3) * 4` gives 20 because…",o:["addition is faster","brackets re-enter at the top","multiplication is skipped","trees read right-to-left"],a:1,why:"factor → '(' expression ')' restarts precedence inside."},
+ {q:"How does `2 - 3 - 4` group?",o:["2-(3-4) = 3","(2-3)-4 = -5","it is an error","(2-4)-3 = -5"],a:1,why:"Same-level loops lean left (left-associative)."},
+ {q:"In `price * count + 2`, what runs first?",o:["the +","the *","both at once","whichever is leftmost"],a:1,why:"Deeper in the tree = earlier. * is deeper."},
+ {q:"`17 % 5` = ?  At which level does `%` bind?",o:["2, with +","3, alone","2, with * and / in term","1, loosest"],a:2,why:"Remainder is term-level: same tightness as × ÷."},
+ {q:"`print (1 + 2` (no closing bracket) says…",o:["nothing, it prints 3","Expected ')' but found the end of the line","Undefined name","Division by zero"],a:1,why:"take() names what was wanted, what was found, and where."}];
+const qs=document.getElementById("qs");
+QBANK.forEach((q,i)=>{const d=document.createElement("div");d.className="q";d.id="q"+i;
+  d.innerHTML="<b>Q"+(i+1+".</b> "+q.q)+"</b>"+q.o.map((o,j)=>"<label><input type='radio' name='q"+i+"' value='"+j+"'> "+o+"</label>").join("")+"<div class='fb'></div>";qs.appendChild(d);});
+document.getElementById("grade").onclick=()=>{let s=0;
+  QBANK.forEach((q,i)=>{const d=document.getElementById("q"+i);const sel=d.querySelector("input:checked");
+    d.classList.remove("correct","wrong");const fb=d.querySelector(".fb");
+    if(sel&&parseInt(sel.value,10)===q.a){s++;d.classList.add("correct");fb.textContent="✓ "+q.why;}
+    else{d.classList.add("wrong");fb.textContent="✗ "+q.why+" (answer: "+q.o[q.a]+")";}});
+  document.getElementById("score").textContent="Score: "+s+" / "+QBANK.length+(s===8?" — professional. 🏆":s>=6?" — almost there.":" — re-read the 60-second idea, then retry.")};
+document.getElementById("reset").onclick=()=>{document.querySelectorAll("input").forEach(i=>i.checked=false);
+  document.querySelectorAll(".q").forEach(d=>{d.classList.remove("correct","wrong");d.querySelector(".fb").textContent="";});
+  document.getElementById("score").textContent="";};
+</script>
+</body>
+</html>
