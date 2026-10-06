@@ -1,0 +1,24 @@
+{
+  "mode": "snapshot",
+  "asof": "2026-10-05",
+  "inputs": {
+    "btc_usd": 86158,
+    "count": 3,
+    "fee": 2,
+    "eur_milli": 893
+  },
+  "pebble_program": "let price = 86158\nlet count = 3\nlet total = price * count + 2\nprint total\nprint (total - 2) / count\nprint total % count\nlet eurm = 893\nprint eurm * count\n",
+  "pebble_outputs": [
+    258476,
+    86158,
+    2,
+    2679
+  ],
+  "python_expected": [
+    258476,
+    86158,
+    2,
+    2679
+  ],
+  "passed": true
+}

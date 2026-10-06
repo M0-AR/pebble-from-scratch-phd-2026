@@ -1,0 +1,5 @@
+let price = 5
+let count = 3
+let total = price * count + 2
+print total
+print (total - 2) / count

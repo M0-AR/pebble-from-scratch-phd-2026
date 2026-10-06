@@ -1,0 +1,7 @@
+services:
+  pebble:
+    build: .
+    volumes:
+      - ./experiments:/pebble/experiments
+      - ./benchmarks:/pebble/benchmarks
+    command: bash -c "pytest tests/ -q && python experiments/precedence_experiment.py && python experiments/live_market_validation.py --snapshot-only && python benchmarks/bench_throughput.py && echo ALL_GREEN"

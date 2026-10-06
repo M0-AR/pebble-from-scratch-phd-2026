@@ -1,0 +1,92 @@
+{
+  "rows": [
+    {
+      "expr": "2 + 3 * 4",
+      "tree": "(+ 2 (* 3 4))",
+      "pebble": 14,
+      "naive_ltr": 20,
+      "naive_wrong": true
+    },
+    {
+      "expr": "(2 + 3) * 4",
+      "tree": "(* (+ 2 3) 4)",
+      "pebble": 20,
+      "naive_ltr": null,
+      "naive_wrong": null
+    },
+    {
+      "expr": "2 - 3 - 4",
+      "tree": "(- (- 2 3) 4)",
+      "pebble": -5,
+      "naive_ltr": -5,
+      "naive_wrong": false
+    },
+    {
+      "expr": "10 / 2 * 3",
+      "tree": "(* (/ 10 2) 3)",
+      "pebble": 15,
+      "naive_ltr": 15,
+      "naive_wrong": false
+    },
+    {
+      "expr": "17 % 5",
+      "tree": "(% 17 5)",
+      "pebble": 2,
+      "naive_ltr": 2,
+      "naive_wrong": false
+    },
+    {
+      "expr": "2 + 17 % 5",
+      "tree": "(+ 2 (% 17 5))",
+      "pebble": 4,
+      "naive_ltr": 4,
+      "naive_wrong": false
+    },
+    {
+      "expr": "price * count + 2",
+      "tree": "(+ (* price count) 2)",
+      "pebble": 17,
+      "naive_ltr": null,
+      "naive_wrong": null
+    },
+    {
+      "expr": "100 - 10 - 10 - 10",
+      "tree": "(- (- (- 100 10) 10) 10)",
+      "pebble": 70,
+      "naive_ltr": 70,
+      "naive_wrong": false
+    },
+    {
+      "expr": "2 * 3 + 4 * 5",
+      "tree": "(+ (* 2 3) (* 4 5))",
+      "pebble": 26,
+      "naive_ltr": 50,
+      "naive_wrong": true
+    },
+    {
+      "expr": "(total - 2) / count",
+      "tree": "(/ (- total 2) count)",
+      "pebble": 5,
+      "naive_ltr": null,
+      "naive_wrong": null
+    },
+    {
+      "expr": "7 / 2",
+      "tree": "(/ 7 2)",
+      "pebble": 3,
+      "naive_ltr": 3,
+      "naive_wrong": false
+    },
+    {
+      "expr": "8 % 3 + 1 * 2",
+      "tree": "(+ (% 8 3) (* 1 2))",
+      "pebble": 4,
+      "naive_ltr": 6,
+      "naive_wrong": true
+    }
+  ],
+  "hidden_pattern": {
+    "claim": "Naive left-to-right evaluation is wrong whenever a tighter operator follows a looser one without brackets.",
+    "naive_error_rate": "3/9"
+  }
+}
