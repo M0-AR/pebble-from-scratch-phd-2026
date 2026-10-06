@@ -24,15 +24,18 @@
 ![Animated terminal demo: tracing 2 + 3 * 4 and running the demo program](assets/demo.gif)
 
 🌐 **Interactive edition:** open [`preview.html`](preview.html) in a browser —
-or, after pushing to GitHub, at
-`https://<your-username>.github.io/<your-repo>/preview.html` (see
-[§H GitHub Pages](#h--github-pages--your-repo-as-a-website)). It is a guided
+or live at
+[`https://m0-ar.github.io/pebble-from-scratch-phd-2026/preview.html`](https://m0-ar.github.io/pebble-from-scratch-phd-2026/preview.html)
+(mirrors: [`/`](https://m0-ar.github.io/pebble-from-scratch-phd-2026/) ·
+[`/docs/preview.html`](https://m0-ar.github.io/pebble-from-scratch-phd-2026/docs/preview.html);
+see [§H GitHub Pages](#h--github-pages--your-repo-as-a-website) for which link
+renders under each Pages setting). It is a guided
 site with a live playground and a scored quiz, no install needed.
 
 ## ⚡ 3-step quickstart
 
 ```bash
-git clone https://github.com/<your-username>/pebble-from-scratch-phd-2026.git
+git clone https://github.com/M0-AR/pebble-from-scratch-phd-2026.git
 cd pebble-from-scratch-phd-2026
 make verify   # pytest + precedence control + snapshot live-market + benchmarks
 ```
@@ -467,7 +470,9 @@ benchmarks/             # B1 timeit harness + committed JSON
 docs/                   # GRAMMAR.md (frozen EBNF), BENCHMARK_METHOD.md
 exercises/              # exercise_percent.md (the video's task, solved+tested)
 Dockerfile / docker-compose.yml / Makefile / requirements.txt
-preview.html            # interactive site: playground + theater + quiz (Pages-ready)
+preview.html / index.html  # interactive site + root redirect (Pages-ready)
+docs/preview.html + docs/index.html  # mirrors with ../assets paths (either source works)
+.nojekyll + docs/.nojekyll  # serve static, skip Jekyll
 assets/                 # hero.png, tree.png, benchmark.png, demo.gif (generated)
 scripts/                # generate_assets.py (images from real outputs)
 .github/workflows/      # ci.yml (tests+experiments+bench), pages.yml (Pages deploy)
@@ -752,17 +757,30 @@ appreciated but not required.
 
 ## H. 🌐 GitHub Pages — your repo as a website
 
-`preview.html` is a standalone static page (no build step, no backend), so
-GitHub Pages can serve it directly:
+The site ships twice — at the repo root (`preview.html`, `index.html`) and
+under `docs/` (`docs/preview.html`, `docs/index.html`) — with an empty
+`.nojekyll` in both places, so it renders under **either** Pages source
+setting. Asset paths are relative (`assets/…` from root files,
+`../assets/…` from `docs/` files), which is what project Pages
+(`https://<user>.github.io/<repo>/…`) requires.
+
+| Pages source | `/` | `/preview.html` | `/docs/preview.html` | What to open |
+|---|---|---|---|---|
+| `/` (root) | ✅ redirect → site | ✅ site | ✅ mirror | [`/preview.html`](https://m0-ar.github.io/pebble-from-scratch-phd-2026/preview.html) |
+| `/docs` | ✅ redirect → site | ✅ mirror | ✅ site | [`/docs/preview.html`](https://m0-ar.github.io/pebble-from-scratch-phd-2026/docs/preview.html) |
+
+Setup (branch deploy, recommended):
 
 1. Push this repo to GitHub.
 2. Open **Settings → Pages**.
 3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
-4. Branch: `main`, folder: `/ (root)`. Save.
-5. Wait ~1 minute, then open
-   `https://<your-username>.github.io/<your-repo>/preview.html`.
+4. Branch: `main`, folder: `/docs`. Save. (Root mirrors mean `/` also works
+   if you pick it instead — the table above is why both are safe.)
+5. Wait 1–2 min for the "pages build and deployment" Action to go green, then
+   probe: `/`, `/preview.html`, and `/docs/preview.html` should all return
+   200.
 
-Alternatively use the included Actions workflow (`.github/workflows/pages.yml):
+Alternatively use the included Actions workflow (`.github/workflows/pages.yml`):
 **Settings → Pages → Source → GitHub Actions**, then push — the workflow
 publishes the whole repo root, so `preview.html`, `assets/`, and the README
 all resolve. Custom domain: add it under **Settings → Pages → Custom domain**
